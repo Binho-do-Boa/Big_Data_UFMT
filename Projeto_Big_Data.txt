@@ -1,6 +1,8 @@
 Projeto aula Big Data
 
 1 - O tema que seu projeto spark irá abordar
+vamos usar a base de dados US Accidents (2016 - 2023)
+fonfe: https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents
 
 2 - O link do google colab com o código do seu projeto spark ( não precisa estar finalizado)
 https://colab.research.google.com/drive/12xuI97PyfLqF9jOR3vywvd4oYvl1xsvR
