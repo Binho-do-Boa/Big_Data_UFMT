@@ -6,3 +6,8 @@ fonfe: https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents
 
 2 - O link do google colab com o código do seu projeto spark ( não precisa estar finalizado)
 https://colab.research.google.com/drive/12xuI97PyfLqF9jOR3vywvd4oYvl1xsvR
+
+Grupo do Projeto:
+Fábio Nascimento
+André Krindges
+Jarbas Malta
