@@ -11,7 +11,7 @@ output_path = '/opt/airflow/dags'
 
 # Função para extrair dados climáticos
 def extract_weather_data():
-    url = 'http://api.openweathermap.org/data/2.5/weather?q=London&appid=35f32c2a73569ffe217bdf86ab257459'
+    url = 'http://api.openweathermap.org/data/2.5/weather?q=London&appid=SUA KEY'
     response = requests.get(url)
     weather_data = response.json()
     with open(os.path.join(output_path, 'weather_data.json'), 'w') as f:
