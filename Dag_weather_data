@@ -1,0 +1,62 @@
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime, timedelta
+import requests
+import json
+import csv
+import os
+
+# Definindo o caminho para salvar os arquivos no diretório do Airflow dentro do contêiner Docker
+output_path = '/opt/airflow/dags'
+
+# Função para extrair dados climáticos
+def extract_weather_data():
+    url = 'http://api.openweathermap.org/data/2.5/weather?q=London&appid=35f32c2a73569ffe217bdf86ab257459'
+    response = requests.get(url)
+    weather_data = response.json()
+    with open(os.path.join(output_path, 'weather_data.json'), 'w') as f:
+        json.dump(weather_data, f)
+
+# Função para processar dados climáticos e salvar em CSV
+def process_weather_data():
+    with open(os.path.join(output_path, 'weather_data.json'), 'r') as f:
+        weather_data = json.load(f)
+    # Processamento dos dados (exemplo simples)
+    processed_data = [
+        ['City', 'Temperature', 'Weather'],
+        [weather_data['name'], weather_data['main']['temp'], weather_data['weather'][0]['description']]
+    ]
+    with open(os.path.join(output_path, 'processed_weather_data.csv'), 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(processed_data)
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2023, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'weather_data_pipeline',
+    default_args=default_args,
+    description='Coletar e Processar dados climáticos',
+    schedule_interval=timedelta(days=1),
+)
+
+extract_task = PythonOperator(
+    task_id='extract_weather_data',
+    python_callable=extract_weather_data,
+    dag=dag,
+)
+
+process_task = PythonOperator(
+    task_id='process_weather_data',
+    python_callable=process_weather_data,
+    dag=dag,
+)
+
+extract_task >> process_task
