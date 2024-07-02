@@ -7,4 +7,4 @@ Esse teste fiz no windows 11
 5) Pronto agora vc deve ter os serviços rodando, coloque os dags (tenho um de exemplo aqui no git)
 6) Para usar a API do exemplo Dag_wether_data, crie um a conta no site https://home.openweathermap.org/api_keys e copie a key  
 7) Obs1:. caso queira rodar o airflow em uma porta que não seja a padrão 8080, editar o arquivo airflow.cfg esse arquivo fica na pasta /opt no serviço airflow-airflow-webserver-1
-8) Obs2:. comando para acessar a pasta do docker exec -it airflow_docker-airflow-webserver-1 /bin/bash
+8) Obs2:. comando para acessar a pasta do docker via powersell ou cmd => exec -it airflow_docker-airflow-webserver-1 /bin/bash
