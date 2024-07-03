@@ -1,62 +1,66 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from datetime import datetime, timedelta
+from airflow.utils.dates import days_ago
+from datetime import datetime
+import pandas as pd
 import requests
-import json
 import csv
 import os
+import pytz
 
-# Definindo o caminho para salvar os arquivos no diretório do Airflow dentro do contêiner Docker
-output_path = '/opt/airflow/dags'
+# Função para buscar dados da API e atualizar o CSV
+def fetch_and_update_weather_data():
+    api_key = ""  # Substitua pela sua chave da API
+    city = ""  # Cidade para a consulta
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}"
 
-# Função para extrair dados climáticos
-def extract_weather_data():
-    url = 'http://api.openweathermap.org/data/2.5/weather?q=London&appid=SUA KEY'
     response = requests.get(url)
-    weather_data = response.json()
-    with open(os.path.join(output_path, 'weather_data.json'), 'w') as f:
-        json.dump(weather_data, f)
+    data = response.json()
 
-# Função para processar dados climáticos e salvar em CSV
-def process_weather_data():
-    with open(os.path.join(output_path, 'weather_data.json'), 'r') as f:
-        weather_data = json.load(f)
-    # Processamento dos dados (exemplo simples)
-    processed_data = [
-        ['City', 'Temperature', 'Weather'],
-        [weather_data['name'], weather_data['main']['temp'], weather_data['weather'][0]['description']]
-    ]
-    with open(os.path.join(output_path, 'processed_weather_data.csv'), 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(processed_data)
+    if response.status_code == 200:
+        # Convertendo a temperatura para graus Celsius e arredondando para 2 casas decimais
+        temperature_kelvin = data['main']['temp']
+        temperature_celsius = round(temperature_kelvin - 273.15, 2)
+        
+        # Obtendo a descrição do clima
+        weather_description = data['weather'][0]['description']
+        
+        # Obtendo data e hora da consulta no horário local de Cuiabá
+        now_utc = datetime.now(pytz.utc)
+        cuiaba_tz = pytz.timezone('America/Cuiaba')
+        now_cuiaba = now_utc.astimezone(cuiaba_tz)
+        date = now_cuiaba.strftime("%Y-%m-%d")
+        time = now_cuiaba.strftime("%H:%M:%S")
+
+        # Criando o arquivo CSV se não existir, e adicionando o cabeçalho
+        file_exists = os.path.isfile('/opt/airflow/dags/temperatura.csv')
+        with open('/opt/airflow/dags/temperatura.csv', mode='a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['Cidade', 'Temperatura', 'Clima', 'Data', 'Hora'])
+            writer.writerow([city, temperature_celsius, weather_description, date, time])
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
 }
 
 dag = DAG(
-    'weather_data_pipeline',
+    'weather_data',
     default_args=default_args,
-    description='Coletar e Processar dados climáticos',
-    schedule_interval=timedelta(days=1),
+    description='Dados Temperatura',
+    schedule_interval='@hourly',
+    start_date=days_ago(1),
+    catchup=False,
 )
 
-extract_task = PythonOperator(
-    task_id='extract_weather_data',
-    python_callable=extract_weather_data,
+task = PythonOperator(
+    task_id='fetch_and_update_weather_data',
+    python_callable=fetch_and_update_weather_data,
     dag=dag,
 )
 
-process_task = PythonOperator(
-    task_id='process_weather_data',
-    python_callable=process_weather_data,
-    dag=dag,
-)
-
-extract_task >> process_task
+task
