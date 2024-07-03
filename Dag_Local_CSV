@@ -1,0 +1,68 @@
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+
+# Caminho para salvar os arquivos no container
+dag_path = "/opt/airflow/dags"
+
+# Função para processar dados do CSV
+def process_csv_data():
+    input_file_path = os.path.join(dag_path, 'dados.csv')
+    output_file_path = os.path.join(dag_path, 'dados_processados.csv')
+    
+    # Carregar dados do CSV
+    df_original = pd.read_csv(input_file_path)
+    
+    # Retirar variáveis que não serão utilizadas
+    colunas = ['ESTADO_CIVIL', 'SEXO', 'RENDA_MENSAL', 'IDADE', 'DATA_SOLICITACAO', 'VL_PATRIMONIO']
+    df_dados = pd.DataFrame(df_original, columns=colunas)
+    
+    # Tratar valores missing (nulos)
+    df_dados['RENDA_MENSAL'] = df_dados['RENDA_MENSAL'].fillna(df_dados['RENDA_MENSAL'].median())
+    df_dados['VL_PATRIMONIO'] = df_dados['VL_PATRIMONIO'].fillna(df_dados['VL_PATRIMONIO'].median())
+    
+    # Tratar valores das variáveis categóricas
+    df_dados['ESTADO_CIVIL'] = df_dados['ESTADO_CIVIL'].replace(['-', '*', 'XXX', 'NAO INFORMADO'], 'OUTROS')
+    df_dados['ESTADO_CIVIL'] = df_dados['ESTADO_CIVIL'].replace(['AMIGADO', 'JUNTADO'], 'CASADO')
+    df_dados['ESTADO_CIVIL'] = df_dados['ESTADO_CIVIL'].replace(['DESQUITADO'], 'DIVORCIADO')
+    
+    # Tratar dados da coluna DATA_SOLICITACAO
+    df_dados['DATA_SOLICITACAO'] = pd.to_datetime(df_dados['DATA_SOLICITACAO'])
+    df_dados['ANO'] = pd.DatetimeIndex(df_dados['DATA_SOLICITACAO']).year
+    df_dados['MES'] = pd.DatetimeIndex(df_dados['DATA_SOLICITACAO']).month
+    df_dados['DIA'] = pd.DatetimeIndex(df_dados['DATA_SOLICITACAO']).day
+    df_dados['DIA_SEMANA'] = df_dados['DATA_SOLICITACAO'].dt.day_name()
+    
+    # Salvar os dados processados em um novo arquivo CSV
+    df_dados.to_csv(output_file_path, index=False)
+
+# Definir argumentos padrão
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2023, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Definir a DAG
+dag = DAG(
+    'processo_csv_pipeline',
+    default_args=default_args,
+    description='Pipeline para processar dados CSV',
+    schedule_interval=timedelta(days=1),
+)
+
+# Definir a tarefa
+process_task = PythonOperator(
+    task_id='process_csv_data',
+    python_callable=process_csv_data,
+    dag=dag,
+)
+
+# Definir a sequência das tarefas
+process_task
