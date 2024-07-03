@@ -1,7 +1,7 @@
-Esse projeto é só para testar o funcionamento do Airflow com Docker
-Esse teste fiz no windows 11 
+Esse projeto é para testar o funcionamento do Airflow com Docker
+Esse teste fiz no ambiente com windows 11 
 1) instalar o Docker desktop
-2) Criar pasta em c:\airflow e dentro dela criar as pastas dags, logs, plugins, e config essa pasta sincroniza com o Docker
+2) Criar pasta em c:\airflow e dentro dela criar as sub pastas dags, logs, plugins, e config essas pastas sincroniza com o Docker
 3) Na pasta c:\airflow colocar o arquivo docker-compose.yaml pode ser copiado aqui do meu git ou original https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
 4) Com Docker aberto no powersell ou cmd rode o comando => docker compose up airflow-init (ira baixar container), depois rode => docker compose up -d
 5) Pronto agora vc deve ter os serviços rodando, coloque os dags (tenho um de exemplo aqui no git)
