@@ -7,6 +7,12 @@ fonfe: https://www.kaggle.com/datasets/sobhanmoosavi/us-accidents
 2 - O link do google colab com o código do seu projeto spark ( não precisa estar finalizado)
 https://colab.research.google.com/drive/12xuI97PyfLqF9jOR3vywvd4oYvl1xsvR
 
+3 - Link youtube com apresentação do projeto com Airflow
+https://www.youtube.com/watch?v=FEmEL19lTzY
+
+4 - Link youtube com apresentação do projeto com Spark
+https://www.youtube.com/watch?v=vfKxyUnKmiY
+
 Grupo do Projeto:
 Fábio Nascimento
 Jarbas Malta
